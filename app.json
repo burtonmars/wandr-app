@@ -16,7 +16,13 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.burtonmars.wandrapp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAKeFHmXDlrTdNjp0K5T_WyFOU3CKsmAS0"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -33,10 +39,24 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Allow Wandr to use your location"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a4b20a49-3700-49e9-a1c4-393aa404f50d"
+      }
+    },
+    "owner": "burtonmars"
   }
 }
