@@ -37,4 +37,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-app-example
+# build artifacts
+android/
+ios/
