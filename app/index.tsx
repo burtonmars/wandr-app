@@ -1,5 +1,6 @@
 import { AppleMaps, GoogleMaps } from 'expo-maps';
-import { Platform, Text } from 'react-native';
+import { Platform } from 'react-native';
+import { Text } from '../components/nativewindui/Text';
 
 export default function App() {
   if (Platform.OS === 'ios') {
@@ -14,8 +15,8 @@ export default function App() {
     }}
     />;
   } else if (Platform.OS === 'android') {
-    return <GoogleMaps.View 
-    style={{ flex: 1 }}
+    return <><GoogleMaps.View 
+    style={{ flex: .9 }}
     cameraPosition={{
       coordinates: {
         latitude: 37.78825,
@@ -23,7 +24,8 @@ export default function App() {
       },
       zoom: 15,
     }}
-    />;
+    />
+    </>;
   } else {
     return <Text>Maps are only available on Android and iOS</Text>;
   }

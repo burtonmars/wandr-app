@@ -40,3 +40,5 @@ yarn-error.*
 # build artifacts
 android/
 ios/
+
+expo-env.d.ts
