@@ -10,8 +10,28 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      bundleIdentifier: 'com.burtonmars.wandrapp',
+      config: {
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+      },
+      infoPlist: {
+        NSLocationAlwaysAndWhenInUseUsageDescription:
+          'Wandr needs access to your location to track your exploration progress and unlock new areas even when the app is in the background.',
+        NSLocationWhenInUseUsageDescription:
+          "Wandr needs access to your location to show your position on the map and track areas you've explored.",
+        NSLocationAlwaysUsageDescription:
+          'Wandr needs access to your location to track your exploration progress even when the app is closed.',
+        UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
+      },
     },
     android: {
+      permissions: [
+        'ACCESS_COARSE_LOCATION',
+        'ACCESS_FINE_LOCATION',
+        'ACCESS_BACKGROUND_LOCATION',
+        'FOREGROUND_SERVICE',
+        'FOREGROUND_SERVICE_LOCATION',
+      ],
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#ffffff',
@@ -41,16 +61,12 @@ export default {
         },
       ],
       [
-        'expo-maps',
+        'expo-location',
         {
-          requestLocationPermission: true,
-          locationPermission: 'Allow Wandr to use your location',
-          android: {
-            apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-          },
-          ios: {
-            apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-          },
+          locationAlwaysAndWhenInUsePermission:
+            'Allow Wandr to use your location to track your exploration progress and unlock new areas even when the app is in the background.',
+          isAndroidBackgroundLocationEnabled: true,
+          isAndroidForegroundServiceEnabled: true,
         },
       ],
     ],
