@@ -1,17 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { useSelector } from 'react-redux';
-import { Text } from '../components/nativewindui/Text';
-import { ThemeToggle } from '../components/nativewindui/ThemeToggle';
-import { useLocation } from '../src/hooks/useLocation';
+import { Text } from '../src/components/nativewindui/Text';
+import { ThemeToggle } from '../src/components/nativewindui/ThemeToggle';
+import locationService from '../src/services/locationService';
 import { RootState } from '../src/store';
 
 export default function App() {
-  useLocation();
-  
   const currentLocation = useSelector((state: RootState) => state.location.currentLocation);
   const permissionStatus = useSelector((state: RootState) => state.location.permissionStatus);
+  
+  useEffect(() => {
+    // Start location tracking when component mounts
+    locationService.startTracking();
+    
+    // Optional: Setup background tracking
+    locationService.setupBackgroundTracking();
+    
+    // Cleanup: Stop tracking when component unmounts
+    return () => {
+      locationService.stopTracking();
+    };
+  }, []);
   
   if (!currentLocation) {
     return (
