@@ -25,7 +25,7 @@ const STORAGE_KEY = 'wandr_explored_areas'
 
 const initialState: ExploredState = {
   exploredAreas: [],
-  exploredHashMap: {}, // Changed from Set to object
+  exploredHashMap: {},
   isLoading: false,
 }
 

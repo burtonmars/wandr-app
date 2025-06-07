@@ -16,5 +16,4 @@ export const noLabelsMapStyle = [
     elementType: 'labels',
     stylers: [{ visibility: 'off' }],
   },
-  // ... many more style rules from the wizard
 ]
