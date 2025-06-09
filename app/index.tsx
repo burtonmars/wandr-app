@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Button, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -8,12 +8,12 @@ import { FogOverlay } from '../src/components/map/FogOverlay';
 import { Text } from '../src/components/nativewindui/Text';
 import locationService from '../src/services/locationService';
 import { AppDispatch, RootState } from '../src/store';
-import { addExploredArea, loadExploredAreas } from '../src/store/slices/exploredSlice';
+import { exploreNewArea, loadExploredAreas, resetExploredToCurrentLocation } from '../src/store/slices/exploredSlice';
 
 const DEFAULT_REGION: Region = {
   latitude: 49.2827,
   longitude: -123.1207,
-  latitudeDelta: 0.0922,
+  latitudeDelta: 0.022,
   longitudeDelta: 0.0421,
 };
 
@@ -21,8 +21,10 @@ export default function App() {
   const dispatch = useDispatch<AppDispatch>();
   const currentLocation = useSelector((state: RootState) => state.location.currentLocation);
   const permissionStatus = useSelector((state: RootState) => state.location.permissionStatus);
+  const { isInitialized: isExploredInitialized } = useSelector((state: RootState) => state.explored);
+
   const [mapRegion, setMapRegion] = useState<Region>(DEFAULT_REGION);
-  const isInitialized = useRef(false);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     dispatch(loadExploredAreas());
@@ -34,31 +36,43 @@ export default function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (currentLocation && !isInitialized.current) {
-      const userRegion: Region = {
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.01,
-      };
-      setMapRegion(userRegion);
-      isInitialized.current = true;
-    }
-  }, [currentLocation]);
-
-  useEffect(() => {
-    if (currentLocation) {
+    if (currentLocation && isExploredInitialized) {
       dispatch(
-        addExploredArea({
+        exploreNewArea({
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
           precision: 7,
         })
       );
-    }
-  }, [currentLocation, dispatch]);
 
-  if (!isInitialized.current) {
+      if (!isMapReady) {
+        setMapRegion({
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          latitudeDelta: 0.002,
+          longitudeDelta: 0.001,
+        });
+        setIsMapReady(true);
+      }
+    }
+  }, [currentLocation, isExploredInitialized, dispatch, isMapReady]);
+
+  const handleResetExplored = () => {
+    if (currentLocation) {
+      console.log('Resetting explored areas to current location...');
+      dispatch(
+        resetExploredToCurrentLocation({
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        })
+      );
+    } else {
+      // Optionally, show an alert if location is not available
+      alert('Current location not found. Cannot reset.');
+    }
+  };
+
+  if (!isMapReady) {
     return (
       <View className="flex-1 items-center justify-center bg-white p-5">
         <ActivityIndicator size="large" color="#0000ff" />
@@ -80,10 +94,19 @@ export default function App() {
         onRegionChangeComplete={setMapRegion}
         showsUserLocation={true}
         customMapStyle={noLabelsMapStyle}
+        zoomControlEnabled={true}
+        minZoomLevel={12}
+        maxZoomLevel={16}
       >
-        {/* Render the stable Polygon-based fog overlay AS A CHILD of the map */}
         <FogOverlay mapRegion={mapRegion} />
       </MapView>
+      <View className="absolute bottom-5 left-5 right-5">
+        <Button
+          title="Reset Explored to Current Location"
+          onPress={handleResetExplored}
+          color="#FF6347"
+        />
+      </View>
     </View>
   );
 }

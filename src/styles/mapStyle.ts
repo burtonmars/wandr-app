@@ -1,19 +1,44 @@
 export const noLabelsMapStyle = [
   {
-    elementType: 'geometry',
-    stylers: [{ color: '#242f3e' }],
-  },
-  {
-    elementType: 'labels.text.fill',
+    featureType: 'poi.business',
     stylers: [{ visibility: 'off' }],
   },
   {
-    elementType: 'labels.text.stroke',
+    featureType: 'poi.park',
+    elementType: 'labels.text',
     stylers: [{ visibility: 'off' }],
   },
   {
-    featureType: 'poi',
+    featureType: 'road.local',
     elementType: 'labels',
     stylers: [{ visibility: 'off' }],
+  },
+  {
+    featureType: 'transit',
+    stylers: [{ visibility: 'off' }],
+  },
+  {
+    elementType: 'labels',
+    stylers: [
+      {
+        visibility: 'off',
+      },
+    ],
+  },
+  {
+    featureType: 'administrative.land_parcel',
+    stylers: [
+      {
+        visibility: 'off',
+      },
+    ],
+  },
+  {
+    featureType: 'administrative.neighborhood',
+    stylers: [
+      {
+        visibility: 'off',
+      },
+    ],
   },
 ]

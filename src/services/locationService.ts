@@ -20,7 +20,6 @@ class LocationService {
     time: number
   } | null = null
 
-  // Tracking configurations based on mode and speed
   private readonly configs = {
     high: {
       accuracy: Location.Accuracy.BestForNavigation,
@@ -59,7 +58,6 @@ class LocationService {
         console.warn(
           'Background location permission not granted - background tracking disabled'
         )
-        // Still return true since foreground tracking will work
       }
 
       return true
@@ -121,7 +119,6 @@ class LocationService {
     const { latitude, longitude } = coords
     const now = Date.now()
 
-    // Adaptive tracking based on speed
     if (coords.speed !== null && coords.speed !== undefined) {
       const speedKmh = coords.speed * 3.6
       const newMode = this.determineTrackingMode(speedKmh)
@@ -129,12 +126,10 @@ class LocationService {
 
       if (newMode !== currentMode) {
         store.dispatch(setTrackingMode(newMode))
-        // Restart tracking with new config
         this.restartTracking()
       }
     }
 
-    // Skip if location hasn't changed significantly
     if (this.shouldSkipUpdate(latitude, longitude, now)) {
       return
     }
@@ -153,7 +148,6 @@ class LocationService {
 
     this.lastProcessedLocation = { lat: latitude, lng: longitude, time: now }
 
-    // emit the geohash here for other services to consume?
     const hash = geohash.encode(latitude, longitude, 9)
     this.emitLocationUpdate(latitude, longitude, hash)
   }
@@ -172,17 +166,16 @@ class LocationService {
       lng
     )
 
-    // Skip if too soon AND too close
     return timeDiff < config.timeInterval && distance < config.distanceInterval
   }
 
   private determineTrackingMode(speedKmh: number): 'high' | 'balanced' | 'low' {
     if (speedKmh > 50) {
-      return 'low' // In vehicle, use low accuracy
+      return 'low'
     } else if (speedKmh > 10) {
-      return 'balanced' // Running/biking
+      return 'balanced'
     } else {
-      return 'high' // Walking/stationary
+      return 'high'
     }
   }
 
@@ -213,7 +206,7 @@ class LocationService {
   }
 
   private emitLocationUpdate(lat: number, lng: number, geohash: string): void {
-    // PLACEHOLDER: emit events for other services here instead of console.log
+    // TODO: emit events for other services here instead of console.log
     console.log(`Location update: ${lat}, ${lng} -> ${geohash}`)
   }
 

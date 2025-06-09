@@ -1,11 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import {
-  createAsyncThunk,
-  createSelector,
-  createSlice,
-  PayloadAction,
-} from '@reduxjs/toolkit'
-import geohash from 'ngeohash'
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
+import * as geohash from 'ngeohash'
 
 import { RootState } from '../index'
 
@@ -14,65 +9,77 @@ interface ExploredArea {
   timestamp: number
   precision: number
 }
-
 interface ExploredState {
   exploredAreas: ExploredArea[]
-  exploredHashMap: Record<string, boolean> // Changed from Set to object
+  exploredHashMap: Record<string, boolean>
   isLoading: boolean
+  isInitialized: boolean
 }
 
 const STORAGE_KEY = 'wandr_explored_areas'
+const GEOHASH_PRECISION = 7
 
 const initialState: ExploredState = {
   exploredAreas: [],
   exploredHashMap: {},
   isLoading: false,
+  isInitialized: false,
 }
 
-// Load explored areas from storage
-export const loadExploredAreas = createAsyncThunk('explored/load', async () => {
-  const stored = await AsyncStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    const data = JSON.parse(stored) as ExploredArea[]
-    return data
+export const loadExploredAreas = createAsyncThunk(
+  'explored/loadFromStorage',
+  async () => {
+    const stored = await AsyncStorage.getItem(STORAGE_KEY)
+    return stored ? (JSON.parse(stored) as ExploredArea[]) : []
   }
-  return []
+)
+
+export const exploreNewArea = createAsyncThunk<
+  ExploredArea | null,
+  { latitude: number; longitude: number; precision?: number },
+  { state: RootState }
+>('explored/addNewArea', async (payload, { getState }) => {
+  const { latitude, longitude, precision = GEOHASH_PRECISION } = payload
+  const hash = geohash.encode(latitude, longitude, precision)
+  const { exploredHashMap } = getState().explored
+  if (exploredHashMap[hash]) {
+    return null
+  }
+
+  const newArea: ExploredArea = {
+    geohash: hash,
+    timestamp: Date.now(),
+    precision,
+  }
+
+  const allAreas = [...getState().explored.exploredAreas, newArea]
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(allAreas))
+
+  return newArea
+})
+
+export const resetExploredToCurrentLocation = createAsyncThunk<
+  ExploredArea[],
+  { latitude: number; longitude: number; precision?: number }
+>('explored/resetToCurrent', async (payload) => {
+  const { latitude, longitude, precision = GEOHASH_PRECISION } = payload
+  const hash = geohash.encode(latitude, longitude, precision)
+  const currentArea: ExploredArea = {
+    geohash: hash,
+    timestamp: Date.now(),
+    precision,
+  }
+  const newExploredAreas = [currentArea]
+
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newExploredAreas))
+
+  return newExploredAreas
 })
 
 const exploredSlice = createSlice({
   name: 'explored',
   initialState,
-  reducers: {
-    addExploredArea: (
-      state,
-      action: PayloadAction<{
-        latitude: number
-        longitude: number
-        precision?: number
-      }>
-    ) => {
-      const { latitude, longitude, precision = 7 } = action.payload
-      const hash = geohash.encode(latitude, longitude, precision)
-
-      // Skip if already explored
-      if (state.exploredHashMap[hash]) {
-        return
-      }
-
-      const newArea: ExploredArea = {
-        geohash: hash,
-        timestamp: Date.now(),
-        precision,
-      }
-
-      state.exploredAreas.push(newArea)
-      state.exploredHashMap[hash] = true
-
-      // Save to storage
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state.exploredAreas))
-    },
-  },
-
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(loadExploredAreas.pending, (state) => {
@@ -88,6 +95,23 @@ const exploredSlice = createSlice({
           {} as Record<string, boolean>
         )
         state.isLoading = false
+        state.isInitialized = true
+      })
+      .addCase(loadExploredAreas.rejected, (state) => {
+        state.isLoading = false
+        state.isInitialized = true
+      })
+      .addCase(exploreNewArea.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.exploredAreas.push(action.payload)
+          state.exploredHashMap[action.payload.geohash] = true
+        }
+      })
+      .addCase(resetExploredToCurrentLocation.fulfilled, (state, action) => {
+        state.exploredAreas = action.payload
+        state.exploredHashMap = {
+          [action.payload[0].geohash]: true,
+        }
       })
   },
 })
@@ -115,5 +139,4 @@ export const selectExploredAreasInBounds = createSelector(
   }
 )
 
-export const { addExploredArea } = exploredSlice.actions
 export default exploredSlice.reducer
